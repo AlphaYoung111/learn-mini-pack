@@ -1,0 +1,5 @@
+function createAssets () {
+  return {
+    
+  }
+}
