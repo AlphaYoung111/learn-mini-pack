@@ -1,32 +1,49 @@
 import fs from 'fs'
 import parser from '@babel/parser'
 import traverse from '@babel/traverse'
+import path from 'path'
 
-function createAssets() {
+function createAssets(filePath) {
   // 获取文件内容
-  const result = fs.readFileSync('./example/main.js', {
+  const source = fs.readFileSync(filePath, {
     encoding: 'utf8',
   })
 
-  console.log(result)
-
   // 获取依赖关系
-
-  const ast = parser.parse(result, {
+  const ast = parser.parse(source, {
     sourceType: 'module',
   })
+
+  const deps = []
 
   // 遍历树
   traverse.default(ast, {
     // 当访问到这个节点的时候就会执行这个函数
-    ImportDeclaration({node }) {
-      console.log(node.source.value)
+    ImportDeclaration({ node }) {
+      deps.push(node.source.value)
     },
   })
 
-  console.log(ast)
-
-  return {}
+  return {
+    filePath,
+    source,
+    deps,
+  }
 }
 
-createAssets()
+function createGraph() {
+  const assetsMain = createAssets('./example/main.js')
+
+  const queue = [assetsMain]
+
+  for (const asset of queue) {
+    asset.deps.forEach((relativePath) => {
+      const child = createAssets(path.resolve('./example', relativePath))
+      queue.push(child)
+    })
+  }
+
+  return queue
+}
+
+const graph = createGraph()
