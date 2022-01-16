@@ -2,6 +2,7 @@ import fs from 'fs'
 import parser from '@babel/parser'
 import traverse from '@babel/traverse'
 import path from 'path'
+import ejs from 'ejs'
 
 function createAssets(filePath) {
   // 获取文件内容
@@ -47,3 +48,13 @@ function createGraph() {
 }
 
 const graph = createGraph()
+
+function build(graph) {
+  const template = fs.readFileSync('./bundle.ejs', {
+    encoding: 'utf-8',
+  })
+  const code = ejs.render(template)
+  console.log(code)
+}
+
+build(graph)
