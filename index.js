@@ -3,6 +3,7 @@ import parser from '@babel/parser'
 import traverse from '@babel/traverse'
 import path from 'path'
 import ejs from 'ejs'
+import { transformFromAst } from 'babel-core'
 
 function createAssets(filePath) {
   // 获取文件内容
@@ -25,9 +26,13 @@ function createAssets(filePath) {
     },
   })
 
+  const { code } = transformFromAst(ast, null, {
+    presets: ['env'],
+  })
+
   return {
     filePath,
-    source,
+    code,
     deps,
   }
 }
@@ -53,8 +58,16 @@ function build(graph) {
   const template = fs.readFileSync('./bundle.ejs', {
     encoding: 'utf-8',
   })
-  const code = ejs.render(template)
-  console.log(code)
+
+  // 创建ejs传入立即执行函数的参数
+  const data = graph.map((asset) => ({
+    filePath: asset.filePath,
+    code: asset.code,
+  }))
+
+  const code = ejs.render(template, { data })
+
+  fs.writeFileSync('./dist/bundle.js', code)
 }
 
 build(graph)

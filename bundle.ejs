@@ -13,18 +13,9 @@
 
   require('./main.js')
 })({
-  './foo.js': function (require, module, exports) {
-    function foo() {
-      console.log('foo')
-    }
-
-    module.exports = {
-      foo,
-    }
-  },
-  './main.js': function (require, module, exports) {
-    const { foo } = require('./foo.js')
-    foo()
-    console.log('main')
-  },
+  <% data.forEach(info => { %>
+    "<%- info['filePath'] %>": function (require, module, exports) {
+      <%- info['code'] %>
+    },
+  <% }); %>  
 })
