@@ -5,6 +5,7 @@ import path from 'path'
 import ejs from 'ejs'
 import { transformFromAst } from 'babel-core'
 
+let id = 0
 function createAssets(filePath) {
   // 获取文件内容
   const source = fs.readFileSync(filePath, {
@@ -26,6 +27,7 @@ function createAssets(filePath) {
     },
   })
 
+  // 转换esm语法为commonjs
   const { code } = transformFromAst(ast, null, {
     presets: ['env'],
   })
@@ -34,6 +36,8 @@ function createAssets(filePath) {
     filePath,
     code,
     deps,
+    id: id++,
+    mapping: {},
   }
 }
 
@@ -45,6 +49,7 @@ function createGraph() {
   for (const asset of queue) {
     asset.deps.forEach((relativePath) => {
       const child = createAssets(path.resolve('./example', relativePath))
+      asset.mapping[relativePath] = child.id
       queue.push(child)
     })
   }
@@ -61,8 +66,9 @@ function build(graph) {
 
   // 创建ejs传入立即执行函数的参数
   const data = graph.map((asset) => ({
-    filePath: asset.filePath,
+    id: asset.id,
     code: asset.code,
+    mapping: asset.mapping,
   }))
 
   const code = ejs.render(template, { data })

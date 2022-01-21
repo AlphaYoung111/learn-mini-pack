@@ -1,33 +1,34 @@
 ;(function (modulesMap) {
-  function require(filePath) {
-    const fn = modulesMap[filePath]
+  function require(id) {
+    const [fn, mapping] = modulesMap[id]
 
     const module = {
       exports: {},
     }
 
-    fn(require, module, module.exports)
+    function localRequire(filePath) {
+      const id = mapping[filePath]
+      return require(id)
+    }
+
+    fn(localRequire, module, module.exports)
 
     return module.exports
   }
 
-  require('./main.js')
+  require(0)
 })({
   
-    "./example/main.js": function (require, module, exports) {
+    "0": [function (require, module, exports) {
       "use strict";
 
 var _foo = require("./foo.js");
 
-var _foo2 = _interopRequireDefault(_foo);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-(0, _foo2.default)();
+(0, _foo.foo)();
 console.log('main.js');
-    },
+    },{"./foo.js":1} ],
   
-    "d:\code\learn-mini-pack\example\foo.js": function (require, module, exports) {
+    "1": [function (require, module, exports) {
       "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -37,16 +38,14 @@ exports.foo = foo;
 
 var _bar = require("./bar.js");
 
-var _bar2 = _interopRequireDefault(_bar);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+(0, _bar.bar)();
 
 function foo() {
   console.log('foo');
 }
-    },
+    },{"./bar.js":2} ],
   
-    "d:\code\learn-mini-pack\example\bar.js": function (require, module, exports) {
+    "2": [function (require, module, exports) {
       "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -57,7 +56,6 @@ exports.bar = bar;
 function bar() {
   console.log('I am bar');
 }
-    },
+    },{} ],
     
-
 })
