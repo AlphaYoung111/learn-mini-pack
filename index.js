@@ -4,12 +4,49 @@ import traverse from '@babel/traverse'
 import path from 'path'
 import ejs from 'ejs'
 import { transformFromAst } from 'babel-core'
+import { jsonLoader } from './jsonLoader.js'
+
+const webpackConfig = {
+  module: {
+    rules: [
+      {
+        test: /\.json$/,
+        use: [jsonLoader]
+      }
+    ]
+  }
+}
 
 let id = 0
-function createAssets(filePath) {
+function createAssets (filePath) {
   // 获取文件内容
-  const source = fs.readFileSync(filePath, {
+  let source = fs.readFileSync(filePath, {
     encoding: 'utf8',
+  })
+
+  // 初始化loader
+  const loaders = webpackConfig.module.rules
+
+  const loadersContxt = {
+    addDeps (dep) {
+      console.log('addDeps', dep);
+    }
+  }
+
+  loaders.forEach(({ test, use }) => {
+    // 匹配配置中的正则
+    if (test.test(filePath)) {
+
+      if (Array.isArray(use)) {
+        // 执行顺序是从右往左
+        use.reverse().forEach(fn => {
+          source = fn.call(loadersContxt, source)
+        })
+      } else {
+        source = use.call(loadersContxt, source)
+      }
+
+    }
   })
 
   // 获取依赖关系
@@ -22,7 +59,7 @@ function createAssets(filePath) {
   // 遍历树
   traverse.default(ast, {
     // 当访问到这个节点的时候就会执行这个函数
-    ImportDeclaration({ node }) {
+    ImportDeclaration ({ node }) {
       deps.push(node.source.value)
     },
   })
@@ -41,7 +78,7 @@ function createAssets(filePath) {
   }
 }
 
-function createGraph() {
+function createGraph () {
   const assetsMain = createAssets('./example/main.js')
 
   const queue = [assetsMain]
@@ -59,7 +96,7 @@ function createGraph() {
 
 const graph = createGraph()
 
-function build(graph) {
+function build (graph) {
   const template = fs.readFileSync('./bundle.ejs', {
     encoding: 'utf-8',
   })

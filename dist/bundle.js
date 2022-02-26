@@ -24,9 +24,16 @@
 
 var _foo = require("./foo.js");
 
+var _test = require("./test.json");
+
+var _test2 = _interopRequireDefault(_test);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+console.log(_test2.default);
 (0, _foo.foo)();
 console.log('main.js');
-    },{"./foo.js":1} ],
+    },{"./foo.js":1,"./test.json":2} ],
   
     "1": [function (require, module, exports) {
       "use strict";
@@ -43,9 +50,18 @@ var _bar = require("./bar.js");
 function foo() {
   console.log('foo');
 }
-    },{"./bar.js":2} ],
+    },{"./bar.js":3} ],
   
     "2": [function (require, module, exports) {
+      "use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = "{\r\n  \"a\": \"test\"\r\n}";
+    },{} ],
+  
+    "3": [function (require, module, exports) {
       "use strict";
 
 Object.defineProperty(exports, "__esModule", {
