@@ -5,6 +5,8 @@ import path from 'path'
 import ejs from 'ejs'
 import { transformFromAst } from 'babel-core'
 import { jsonLoader } from './jsonLoader.js'
+import ChangeOutputPath from './ChangeOutputPath.js'
+import { SyncHook } from 'tapable'
 
 const webpackConfig = {
   module: {
@@ -14,8 +16,20 @@ const webpackConfig = {
         use: [jsonLoader]
       }
     ]
-  }
+  },
+
+  plugins: [
+    new ChangeOutputPath({
+      path: './dist/test_bundle.js'
+    })
+  ]
 }
+
+
+const hooks = {
+  emitFile: new SyncHook(['pluginContxt'])
+}
+
 
 let id = 0
 function createAssets (filePath) {
@@ -94,6 +108,16 @@ function createGraph () {
   return queue
 }
 
+
+function initPlugins () {
+  const plugins = webpackConfig.plugins
+  plugins.forEach(plugin => {
+    plugin.apply(hooks)
+  })
+}
+
+initPlugins()
+
 const graph = createGraph()
 
 function build (graph) {
@@ -110,7 +134,18 @@ function build (graph) {
 
   const code = ejs.render(template, { data })
 
-  fs.writeFileSync('./dist/bundle.js', code)
+  // 修改打包后的位置
+  let outputPath = './dist/bundle.js'
+
+  const pluginContxt = {
+    changeOutputPath (path) {
+      outputPath = path
+    }
+  }
+
+
+  hooks.emitFile.call(pluginContxt)
+  fs.writeFileSync(outputPath, code)
 }
 
 build(graph)
